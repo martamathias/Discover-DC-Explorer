@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Discover Washington, DC"
+description = "A welcoming, colorful visitor guide to Washington, DC, covering iconic landmarks, local food, neighborhood culture, and practical trip tips, with an interactive attraction picker."
+version = "1.0.0"
+id = "artifacts/discover-washington-dc"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 21426
+
+[services.development]
+run = "pnpm --filter @workspace/discover-washington-dc run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/discover-washington-dc", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/discover-washington-dc/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "21426"
+BASE_PATH = "/"
