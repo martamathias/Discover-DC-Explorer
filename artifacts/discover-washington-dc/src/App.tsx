@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import AskDCExplorer from './AskDCExplorer';
+import ChatGuide from "./ChatGuide";
 import {
   ArrowDown,
   ArrowRight,
@@ -225,10 +225,15 @@ function App() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [recommendation, setRecommendation] = useState<Attraction | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [submittedSearch, setSubmittedSearch] = useState('');
   const normalizedSearchQuery = normalizeSearchText(searchQuery.trim());
-  const searchResults = normalizedSearchQuery
+  const normalizedSubmittedSearch = normalizeSearchText(submittedSearch.trim());
+  const searchIsReady =
+    normalizedSearchQuery.length > 0 &&
+    normalizedSearchQuery === normalizedSubmittedSearch;
+  const searchResults = searchIsReady
     ? guideSearchItems.filter((item) =>
-        normalizeSearchText(`${item.title} ${item.category} ${item.summary} ${item.keywords}`).includes(normalizedSearchQuery),
+        normalizeSearchText(`${item.title} ${item.category} ${item.summary} ${item.keywords}`).includes(normalizedSubmittedSearch),
       )
     : [];
   const chooseSurprise = () => {
@@ -290,9 +295,9 @@ function App() {
           </div>
         </div>
 
-<<<<<<< HEAD
-        <AskDCExplorer />
-  <AskDCExplorer />
+        <ChatGuide />
+        
+  
         <section className="guide-search" aria-labelledby="guide-search-title" data-testid="guide-search-section">
           <div className="container guide-search-inner">
             <div className="guide-search-copy">
@@ -301,6 +306,10 @@ function App() {
               <p>Look up landmarks, food, neighborhoods, and trip tips.</p>
             </div>
             <div className="guide-search-main">
+              <form className="guide-search-controls" onSubmit={(event) => {
+                event.preventDefault();
+                setSubmittedSearch(searchQuery.trim());
+              }}>
               <div className="guide-search-field">
                 <Search size={19} aria-hidden="true" />
                 <label className="sr-only" htmlFor="guide-search-input">
@@ -312,7 +321,10 @@ function App() {
                   value={searchQuery}
                   onChange={(event) => setSearchQuery(event.target.value)}
                   onKeyDown={(event) => {
-                    if (event.key === 'Escape') setSearchQuery('');
+                    if (event.key === 'Escape') {
+                      setSearchQuery('');
+                      setSubmittedSearch('');
+                    }
                   }}
                   placeholder="Try “Metro” or “Ethiopian food”"
                   autoComplete="off"
@@ -323,7 +335,10 @@ function App() {
                   <button
                     className="guide-search-clear"
                     type="button"
-                    onClick={() => setSearchQuery('')}
+                    onClick={() => {
+                      setSearchQuery('');
+                      setSubmittedSearch('');
+                    }}
                     aria-label="Clear search"
                     data-testid="clear-guide-search"
                   >
@@ -331,18 +346,30 @@ function App() {
                   </button>
                 )}
               </div>
+              <button className="guide-search-submit" type="submit" data-testid="button-submit-guide-search">
+                Search <ArrowRight size={15} aria-hidden="true" />
+              </button>
+              </form>
               <p className="guide-search-status" id="guide-search-status" aria-live="polite" data-testid="search-guide-status">
                 {!normalizedSearchQuery
                   ? 'Search the guide to see matching stops and tips.'
+                  : !searchIsReady
+                    ? 'Press Search to see matching stops and tips.'
                   : searchResults.length === 1
                     ? '1 result'
                     : `${searchResults.length} results`}
               </p>
-              {normalizedSearchQuery && searchResults.length > 0 && (
+              {searchIsReady && searchResults.length > 0 && (
                 <ul className="guide-search-results" data-testid="search-guide-results">
                   {searchResults.map((item) => (
                     <li key={item.id} data-testid={`search-result-${item.id}`}>
-                      <a href={item.href} onClick={() => setSearchQuery('')}>
+                      <a
+                        href={item.href}
+                        onClick={() => {
+                          setSearchQuery('');
+                          setSubmittedSearch('');
+                        }}
+                      >
                         <span className="guide-search-result-copy">
                           <span className="guide-search-result-category">{item.category}</span>
                           <span className="guide-search-result-title">{item.title}</span>
@@ -354,7 +381,7 @@ function App() {
                   ))}
                 </ul>
               )}
-              {normalizedSearchQuery && searchResults.length === 0 && (
+              {searchIsReady && searchResults.length === 0 && (
                 <p className="guide-search-empty" data-testid="search-guide-empty">
                   No matches found. Try a landmark, food, neighborhood, or “Metro”.
                 </p>
@@ -362,7 +389,6 @@ function App() {
             </div>
           </div>
         </section>
->>>>>>> 58d5cfc (Implement layout and structure for Discover Washington DC app)
 
         <section className="section" id="landmarks" aria-labelledby="landmarks-title" data-testid="landmarks-section">
           <div className="container">
@@ -507,6 +533,8 @@ function App() {
             </div>
           </div>
         </section>
+
+        <ChatGuide />
 
         <section className="closing" aria-label="Explore Washington DC">
           <div className="container closing-inner">

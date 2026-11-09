@@ -10,6 +10,8 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: chat
+    description: Washington, DC guide chat
 paths:
   /healthz:
     get:
@@ -24,6 +26,54 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /chat:
+    post:
+      operationId: postChat
+      tags: [chat]
+      summary: Ask the city guide a question
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChatRequest"
+      responses:
+        "200":
+          description: City guide reply
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatResponse"
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatErrorResponse"
+        "502":
+          description: Gemini request failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatErrorResponse"
+        "503":
+          description: Gemini API key is not configured
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatErrorResponse"
+  /chat/system-prompt:
+    get:
+      operationId: getChatSystemPrompt
+      tags: [chat]
+      summary: Get the city guide system prompt
+      responses:
+        "200":
+          description: System prompt and word count
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatSystemPromptResponse"
 components:
   schemas:
     HealthStatus:
@@ -33,4 +83,92 @@ components:
           type: string
       required:
         - status
+    ChatHistoryMessage:
+      type: object
+      properties:
+        role:
+          type: string
+          enum: [user, assistant]
+        content:
+          type: string
+          maxLength: 2000
+      required: [role, content]
+    ChatSettingsInput:
+      type: object
+      properties:
+        temperature:
+          type: number
+          minimum: 0
+          maximum: 2
+        topP:
+          type: number
+          minimum: 0
+          maximum: 1
+        maxOutputTokens:
+          type: integer
+          minimum: 32
+          maximum: 1024
+    ChatSettings:
+      type: object
+      properties:
+        temperature:
+          type: number
+        topP:
+          type: number
+        maxOutputTokens:
+          type: integer
+      required: [temperature, topP, maxOutputTokens]
+    ChatRequest:
+      type: object
+      properties:
+        message:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        history:
+          type: array
+          maxItems: 12
+          items:
+            $ref: "#/components/schemas/ChatHistoryMessage"
+        settings:
+          $ref: "#/components/schemas/ChatSettingsInput"
+      required: [message]
+    ChatUsage:
+      type: object
+      properties:
+        promptTokens:
+          type: integer
+        replyTokens:
+          type: integer
+        totalTokens:
+          type: integer
+      required: [promptTokens, replyTokens, totalTokens]
+    ChatResponse:
+      type: object
+      properties:
+        reply:
+          type: string
+        usage:
+          $ref: "#/components/schemas/ChatUsage"
+        settings:
+          $ref: "#/components/schemas/ChatSettings"
+        model:
+          type: string
+        truncated:
+          type: boolean
+      required: [reply, usage, settings, model, truncated]
+    ChatSystemPromptResponse:
+      type: object
+      properties:
+        systemPrompt:
+          type: string
+        wordCount:
+          type: integer
+      required: [systemPrompt, wordCount]
+    ChatErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required: [error]
 
