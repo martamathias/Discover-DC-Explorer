@@ -157,11 +157,25 @@ function App() {
         </section>
 
         <div className="intro-strip">
+          
+            <p>Washington is more than its postcard view. Make room for the whole city.</p>
+            <span className="intro-tag">Monuments to mom-and-pop tables</span>
+
+          </div>
+        </div>
+
+  <AskDCExplorer />
+                <div className="intro-strip">
           <div className="intro-inner">
             <p>Washington is more than its postcard view. Make room for the whole city.</p>
             <span className="intro-tag">Monuments to mom-and-pop tables</span>
           </div>
         </div>
+
+  <AskDCExplorer />
+
+        <section className="section" id="landmarks" aria-labelledby="landmarks-title" data-testid="landmarks-section">
+        
 
         <section className="section" id="landmarks" aria-labelledby="landmarks-title" data-testid="landmarks-section">
           <div className="container">
