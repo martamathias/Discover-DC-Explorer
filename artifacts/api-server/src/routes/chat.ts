@@ -11,7 +11,7 @@ import {
 } from "../city";
 
 const router: IRouter = Router();
-const DEFAULT_GEMINI_MODEL = "gemini-3.8-flash";
+const DEFAULT_GEMINI_MODEL = "gemini-2.5-flash";
 const DEFAULT_SETTINGS = {
   temperature: 1,
   topP: 0.95,
@@ -56,12 +56,13 @@ router.post("/chat", async (req, res): Promise<void> => {
   ];
 
   try {
-    const ai = new GoogleGenAI({ apiKey });
+    const ai = new GoogleGenAI({ apiKey, httpOptions: { timeout: 30000 } });
     const response = await ai.models.generateContent({
       model,
       contents,
       config: {
         systemInstruction: getCitySystemPrompt(),
+        ...(model.startsWith("gemini-2.5-flash") ? { thinkingConfig: { thinkingBudget: 0 } } : {}),
         temperature: settings.temperature,
         topP: settings.topP,
         maxOutputTokens: settings.maxOutputTokens,

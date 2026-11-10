@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import ChatGuide from "./ChatGuide";
+import DishGallery from "./DishGallery";
 import {
   ArrowDown,
   ArrowRight,
@@ -533,7 +534,7 @@ function App() {
           </div>
         </section>
 
-        <ChatGuide />
+        <DishGallery />
 
         <section className="closing" aria-label="Explore Washington DC">
           <div className="container closing-inner">
