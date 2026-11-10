@@ -1,0 +1,1 @@
+- [Discover DC scope](discover-dc-scope.md) — Keep the visitor guide public and stateless; no login or database unless the user changes scope.

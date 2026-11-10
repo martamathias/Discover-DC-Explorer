@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import AskDCExplorer from './AskDCExplorer';
+import ChatGuide from "./ChatGuide";
 import {
   ArrowDown,
   ArrowRight,
@@ -9,6 +9,7 @@ import {
   Menu,
   Mountain,
   Orbit,
+  Search,
   ShoppingBasket,
   Sparkles,
   Ticket,
@@ -22,6 +23,125 @@ type Attraction = {
   description: string;
   symbol: typeof Landmark;
 };
+
+type GuideSearchItem = {
+  id: string;
+  title: string;
+  category: string;
+  summary: string;
+  href: string;
+  keywords: string;
+};
+
+const guideSearchItems: GuideSearchItem[] = [
+  {
+    id: 'white-house',
+    title: 'The White House',
+    category: 'Landmark',
+    summary: 'See it from Lafayette Square; tours require advance planning.',
+    href: '#landmarks',
+    keywords: 'president pennsylvania avenue civic',
+  },
+  {
+    id: 'lincoln-memorial',
+    title: 'Lincoln Memorial',
+    category: 'Landmark',
+    summary: 'A memorable stop at the western end of the National Mall.',
+    href: '#landmarks',
+    keywords: 'reflecting pool monument history',
+  },
+  {
+    id: 'washington-monument',
+    title: 'Washington Monument',
+    category: 'Landmark',
+    summary: 'The obelisk at the heart of the National Mall.',
+    href: '#landmarks',
+    keywords: 'obelisk ticket national mall',
+  },
+  {
+    id: 'smithsonian',
+    title: 'Smithsonian museums',
+    category: 'Museums',
+    summary: 'Explore art, history, science, air and space, and more.',
+    href: '#museums',
+    keywords: 'free museum natural history air space african american',
+  },
+  {
+    id: 'ethiopian-food',
+    title: 'Ethiopian food',
+    category: 'Food',
+    summary: 'Try injera and shared dishes around Shaw and U Street.',
+    href: '#food',
+    keywords: 'injera stew dinner restaurant',
+  },
+  {
+    id: 'half-smoke',
+    title: 'DC half-smoke',
+    category: 'Food',
+    summary: 'A smoky local sausage, with Ben’s Chili Bowl as a classic stop.',
+    href: '#food',
+    keywords: 'sausage bens chili bowl u street',
+  },
+  {
+    id: 'food-markets',
+    title: 'Eastern Market and Union Market',
+    category: 'Food markets',
+    summary: 'Browse neighborhood vendors, food stalls, and makers.',
+    href: '#food',
+    keywords: 'market capitol hill noma food stalls',
+  },
+  {
+    id: 'georgetown',
+    title: 'Georgetown',
+    category: 'Neighborhood',
+    summary: 'Walk historic streets, independent shops, and the waterfront.',
+    href: '#neighborhoods',
+    keywords: 'shops water river shopping',
+  },
+  {
+    id: 'u-street',
+    title: 'U Street',
+    category: 'Neighborhood',
+    summary: 'Discover live music, local restaurants, and Black history.',
+    href: '#neighborhoods',
+    keywords: 'music culture black history community',
+  },
+  {
+    id: 'dc-communities',
+    title: 'DC’s diverse communities',
+    category: 'Culture',
+    summary: 'Explore the city respectfully and support local businesses.',
+    href: '#neighborhoods',
+    keywords: 'culture diversity communities local businesses',
+  },
+  {
+    id: 'free-museums',
+    title: 'Free museums',
+    category: 'Visitor tip',
+    summary: 'Many Smithsonian museums and the National Gallery are free.',
+    href: '#plan',
+    keywords: 'admission cost free Smithsonian',
+  },
+  {
+    id: 'metro',
+    title: 'Metro transportation',
+    category: 'Visitor tip',
+    summary: 'Use Metrorail and Metrobus; check current fares and service.',
+    href: '#plan',
+    keywords: 'transit bus train smartrip wmata',
+  },
+  {
+    id: 'seasons',
+    title: 'Best seasons to visit',
+    category: 'Visitor tip',
+    summary: 'Spring brings blossoms; fall is great for comfortable walks.',
+    href: '#plan',
+    keywords: 'spring fall autumn cherry blossoms weather summer winter',
+  },
+];
+
+const normalizeSearchText = (value: string) =>
+  value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 
 const attractions: Attraction[] = [
   {
@@ -104,6 +224,18 @@ const landmarkCards = [
 function App() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [recommendation, setRecommendation] = useState<Attraction | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [submittedSearch, setSubmittedSearch] = useState('');
+  const normalizedSearchQuery = normalizeSearchText(searchQuery.trim());
+  const normalizedSubmittedSearch = normalizeSearchText(submittedSearch.trim());
+  const searchIsReady =
+    normalizedSearchQuery.length > 0 &&
+    normalizedSearchQuery === normalizedSubmittedSearch;
+  const searchResults = searchIsReady
+    ? guideSearchItems.filter((item) =>
+        normalizeSearchText(`${item.title} ${item.category} ${item.summary} ${item.keywords}`).includes(normalizedSubmittedSearch),
+      )
+    : [];
   const chooseSurprise = () => {
     const choices = attractions.filter((item) => item.name !== recommendation?.name);
     setRecommendation(choices[Math.floor(Math.random() * choices.length)]);
@@ -163,7 +295,99 @@ function App() {
           </div>
         </div>
 
-        <AskDCExplorer />
+        <ChatGuide />
+
+        <section className="guide-search" aria-labelledby="guide-search-title" data-testid="guide-search-section">
+          <div className="container guide-search-inner">
+            <div className="guide-search-copy">
+              <div className="section-kicker">Find your next stop</div>
+              <h2 id="guide-search-title">Search the guide</h2>
+              <p>Look up landmarks, food, neighborhoods, and trip tips.</p>
+            </div>
+            <div className="guide-search-main">
+              <form className="guide-search-controls" onSubmit={(event) => {
+                event.preventDefault();
+                setSubmittedSearch(searchQuery.trim());
+              }}>
+              <div className="guide-search-field">
+                <Search size={19} aria-hidden="true" />
+                <label className="sr-only" htmlFor="guide-search-input">
+                  Search landmarks, food, neighborhoods, and tips
+                </label>
+                <input
+                  id="guide-search-input"
+                  type="search"
+                  value={searchQuery}
+                  onChange={(event) => setSearchQuery(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Escape') {
+                      setSearchQuery('');
+                      setSubmittedSearch('');
+                    }
+                  }}
+                  placeholder="Try “Metro” or “Ethiopian food”"
+                  autoComplete="off"
+                  aria-describedby="guide-search-status"
+                  data-testid="search-guide-input"
+                />
+                {searchQuery && (
+                  <button
+                    className="guide-search-clear"
+                    type="button"
+                    onClick={() => {
+                      setSearchQuery('');
+                      setSubmittedSearch('');
+                    }}
+                    aria-label="Clear search"
+                    data-testid="clear-guide-search"
+                  >
+                    <X size={16} aria-hidden="true" />
+                  </button>
+                )}
+              </div>
+              <button className="guide-search-submit" type="submit" data-testid="button-submit-guide-search">
+                Search <ArrowRight size={15} aria-hidden="true" />
+              </button>
+              </form>
+              <p className="guide-search-status" id="guide-search-status" aria-live="polite" data-testid="search-guide-status">
+                {!normalizedSearchQuery
+                  ? 'Search the guide to see matching stops and tips.'
+                  : !searchIsReady
+                    ? 'Press Search to see matching stops and tips.'
+                  : searchResults.length === 1
+                    ? '1 result'
+                    : `${searchResults.length} results`}
+              </p>
+              {searchIsReady && searchResults.length > 0 && (
+                <ul className="guide-search-results" data-testid="search-guide-results">
+                  {searchResults.map((item) => (
+                    <li key={item.id} data-testid={`search-result-${item.id}`}>
+                      <a
+                        href={item.href}
+                        onClick={() => {
+                          setSearchQuery('');
+                          setSubmittedSearch('');
+                        }}
+                      >
+                        <span className="guide-search-result-copy">
+                          <span className="guide-search-result-category">{item.category}</span>
+                          <span className="guide-search-result-title">{item.title}</span>
+                          <span className="guide-search-result-summary">{item.summary}</span>
+                        </span>
+                        <ArrowRight size={16} aria-hidden="true" />
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {searchIsReady && searchResults.length === 0 && (
+                <p className="guide-search-empty" data-testid="search-guide-empty">
+                  No matches found. Try a landmark, food, neighborhood, or “Metro”.
+                </p>
+              )}
+            </div>
+          </div>
+        </section>
 
         <section className="section" id="landmarks" aria-labelledby="landmarks-title" data-testid="landmarks-section">
           <div className="container">
@@ -202,7 +426,7 @@ function App() {
           </div>
         </section>
 
-        <section className="field-note" aria-labelledby="field-title" data-testid="museum-section">
+        <section className="field-note" id="museums" aria-labelledby="field-title" data-testid="museum-section">
           <div className="container field-inner">
             <div className="field-stamp" aria-hidden="true">
               <Orbit />
@@ -308,6 +532,8 @@ function App() {
             </div>
           </div>
         </section>
+
+        <ChatGuide />
 
         <section className="closing" aria-label="Explore Washington DC">
           <div className="container closing-inner">

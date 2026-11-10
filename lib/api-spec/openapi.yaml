@@ -11,7 +11,7 @@ tags:
   - name: health
     description: Health operations
   - name: chat
-    description: AI city guide operations
+    description: Washington, DC guide chat
 paths:
   /healthz:
     get:
@@ -28,9 +28,9 @@ paths:
                 $ref: "#/components/schemas/HealthStatus"
   /chat:
     post:
-      operationId: askCityGuide
+      operationId: postChat
       tags: [chat]
-      summary: Ask the DC city guide
+      summary: Ask the city guide a question
       requestBody:
         required: true
         content:
@@ -39,45 +39,41 @@ paths:
               $ref: "#/components/schemas/ChatRequest"
       responses:
         "200":
-          description: City guide response
+          description: City guide reply
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ChatResponse"
         "400":
-          description: Invalid message, history, or generation settings
+          description: Invalid request
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ErrorResponse"
+                $ref: "#/components/schemas/ChatErrorResponse"
         "502":
-          description: Gemini could not provide a response
+          description: Gemini request failed
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ErrorResponse"
+                $ref: "#/components/schemas/ChatErrorResponse"
         "503":
           description: Gemini API key is not configured
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ErrorResponse"
+                $ref: "#/components/schemas/ChatErrorResponse"
   /chat/system-prompt:
     get:
-      operationId: getCityGuideSystemPrompt
+      operationId: getChatSystemPrompt
       tags: [chat]
       summary: Get the city guide system prompt
       responses:
         "200":
-          description: System prompt used for chat responses
+          description: System prompt and word count
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  systemPrompt:
-                    type: string
-                required: [systemPrompt]
+                $ref: "#/components/schemas/ChatSystemPromptResponse"
 components:
   schemas:
     HealthStatus:
@@ -87,21 +83,6 @@ components:
           type: string
       required:
         - status
-    ChatRequest:
-      type: object
-      properties:
-        message:
-          type: string
-          minLength: 1
-          maxLength: 4000
-        history:
-          type: array
-          maxItems: 40
-          items:
-            $ref: "#/components/schemas/ChatHistoryMessage"
-        settings:
-          $ref: "#/components/schemas/ChatSettings"
-      required: [message]
     ChatHistoryMessage:
       type: object
       properties:
@@ -110,49 +91,81 @@ components:
           enum: [user, assistant]
         content:
           type: string
-          maxLength: 4000
+          maxLength: 2000
       required: [role, content]
-    ChatSettings:
+    ChatSettingsInput:
       type: object
       properties:
         temperature:
           type: number
           minimum: 0
           maximum: 2
-          default: 1
         topP:
           type: number
           minimum: 0
           maximum: 1
-          default: 0.95
         maxOutputTokens:
           type: integer
           minimum: 32
           maximum: 1024
-          default: 300
+    ChatSettings:
+      type: object
+      properties:
+        temperature:
+          type: number
+        topP:
+          type: number
+        maxOutputTokens:
+          type: integer
+      required: [temperature, topP, maxOutputTokens]
+    ChatRequest:
+      type: object
+      properties:
+        message:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        history:
+          type: array
+          maxItems: 12
+          items:
+            $ref: "#/components/schemas/ChatHistoryMessage"
+        settings:
+          $ref: "#/components/schemas/ChatSettingsInput"
+      required: [message]
+    ChatUsage:
+      type: object
+      properties:
+        promptTokens:
+          type: integer
+        replyTokens:
+          type: integer
+        totalTokens:
+          type: integer
+      required: [promptTokens, replyTokens, totalTokens]
     ChatResponse:
       type: object
       properties:
         reply:
           type: string
         usage:
-          type: object
-          properties:
-            promptTokens:
-              type: integer
-            outputTokens:
-              type: integer
-            totalTokens:
-              type: integer
-            truncated:
-              type: boolean
-          required: [promptTokens, outputTokens, totalTokens, truncated]
+          $ref: "#/components/schemas/ChatUsage"
         settings:
           $ref: "#/components/schemas/ChatSettings"
         model:
           type: string
-      required: [reply, usage, settings, model]
-    ErrorResponse:
+        truncated:
+          type: boolean
+      required: [reply, usage, settings, model, truncated]
+    ChatSystemPromptResponse:
+      type: object
+      properties:
+        systemPrompt:
+          type: string
+        wordCount:
+          type: integer
+      required: [systemPrompt, wordCount]
+    ChatErrorResponse:
       type: object
       properties:
         error:
